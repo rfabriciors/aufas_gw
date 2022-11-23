@@ -1,0 +1,9 @@
+**/build
+**/.vscode
+**/Documentos
+**/matlab
+**/mosquitto
+**/NodeRed
+sdkconfig
+sdkconfig.old
+./core/.Kconfig.projbuild
