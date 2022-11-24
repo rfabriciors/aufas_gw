@@ -30,9 +30,9 @@
 #define CONTROL_MODE_AUTOMATIC 1
 #define CONTROL_MODE_TUNNING 2
 
-extern CARGA *motor;
+extern CARGA *led1;
 extern bool pid_alterado;
-extern bool motor_alterado;
+extern bool led1_alterado;
 extern esp_mqtt_client_config_t mqtt_cfg;
 
 class CONFIGMAN

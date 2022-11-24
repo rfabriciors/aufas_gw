@@ -26,8 +26,8 @@
 #include "cJSON.h"
 
 #define MAX_NUMERO_CLIENTES CONFIG_DEFAULT_AP_MAX_CONNECTIONS
-#define LED_BUILDING GPIO_NUM_2
-#define LED1 GPIO_NUM_3
+#define LED_BUILDING GPIO_NUM_26
+#define LED1 GPIO_NUM_33
 #define GPIO_OUTPUT (1ULL << LED_BUILDING)
 #define BUTTON_MAN_AUT GPIO_NUM_27
 #define BUTTON_MOTOR GPIO_NUM_16
@@ -39,10 +39,8 @@
 #define MEMORY_TAG "Memory"
 #define SNTP_TAG "sntp"
 #define TAG_TASK_SOCKET "socket"
-#define TAG "ControleAut"
+#define TAG "AUFA_GW"
 #define TERMINATOR ";"
-#define DEBUG
-
 extern EventGroupHandle_t wifi_event_group;
 extern EventGroupHandle_t wifi_manager_event_group; // Deve-se tirar a palavra static de wifi_manager.h   XXXXXXXXXXXXXXXXXXX
 

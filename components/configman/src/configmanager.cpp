@@ -55,21 +55,21 @@ int CONFIGMAN::parse_json_data(char *buffer)
             value_str = item->valuestring;
         //    ESP_LOGI(TAG_CONFIGMAN, "value_str: %s", value_str);
         }
-        else if (0 == strncmp(item->string, "motor", sizeof("motor")))
+        else if (0 == strncmp(item->string, "led", sizeof("led")))
         {
             // Obter a quantidade de vetores (número de instâncias Motor)
-            int8_t instMOTORNum = cJSON_GetArraySize(item);
-            for (int8_t k = 0; k < instMOTORNum; k++)
+            int8_t instLEDNum = cJSON_GetArraySize(item);
+            for (int8_t k = 0; k < instLEDNum; k++)
             {
                 value_item = cJSON_GetArrayItem(item, k);
                 aux = cJSON_GetObjectItem(value_item, "name");
                 if (aux != NULL)
                 {
-                    if (0 == strncmp(aux->valuestring, "motor_1", sizeof("motor_1")))
+                    if (0 == strncmp(aux->valuestring, "led_1", sizeof("led_1")))
                     {
-                        (cJSON_GetObjectItem(value_item, "activate") != NULL) ? motor->switchCarga((int)cJSON_GetObjectItem(value_item, "activate")->valueint) : NULL;
-                        (cJSON_GetObjectItem(value_item, "location") != NULL) ? motor->setLocation((char *)cJSON_GetObjectItem(value_item, "location")->valuestring) : NULL;
-                        motor_alterado = true;
+                        (cJSON_GetObjectItem(value_item, "activate") != NULL) ? led1->switchCarga((int)cJSON_GetObjectItem(value_item, "activate")->valueint) : NULL;
+                        (cJSON_GetObjectItem(value_item, "location") != NULL) ? led1->setLocation((char *)cJSON_GetObjectItem(value_item, "location")->valuestring) : NULL;
+                        led1_alterado = true;
                     }
                 }
             }
@@ -102,11 +102,11 @@ void CONFIGMAN::getdata(int datatype, char *buffer)
     sprintf(timestamp, "%d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
     esp_chip_info_t chip_info;
-    cJSON *root, *motorArray, *motor1, *systemInfo;
+    cJSON *root, *ledArray, *led_1, *systemInfo;
     char *json_info;
     root = cJSON_CreateObject();
-    motor1 = cJSON_CreateObject();
-    motorArray = cJSON_CreateArray();
+    led_1 = cJSON_CreateObject();
+    ledArray = cJSON_CreateArray();
     
     if (datatype == STORE_SYSTEM_CONFIG)
     {
@@ -131,11 +131,11 @@ void CONFIGMAN::getdata(int datatype, char *buffer)
         cJSON_AddItemToObject(root, "systeminfo", systemInfo);
     }
 
-    cJSON_AddStringToObject(motor1, "name", "motor_1");
-    cJSON_AddNumberToObject(motor1, "activate", motor->getCarga());
-    cJSON_AddStringToObject(motor1, "location", motor->getLocation());
-    cJSON_AddItemToArray(motorArray, motor1);
-    cJSON_AddItemToObject(root, "motor", motorArray);
+    cJSON_AddStringToObject(led_1, "name", "led_1");
+    cJSON_AddNumberToObject(led_1, "activate", led1->getCarga());
+    cJSON_AddStringToObject(led_1, "location", led1->getLocation());
+    cJSON_AddItemToArray(ledArray, led_1);
+    cJSON_AddItemToObject(root, "led", ledArray);
 
     json_info = cJSON_PrintUnformatted(root);
 

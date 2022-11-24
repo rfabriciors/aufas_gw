@@ -6,9 +6,8 @@
 RTC_DATA_ATTR int boot_count = 0;
 struct tm timeinfo;
 time_t now = 0;
-bool pid_alterado = true;
-bool motor_alterado = true;
-CARGA *motor = new CARGA(GPIO_NUM_22, (char *)"Inversor");
+bool led1_alterado = true;
+CARGA *led1 = new CARGA(GPIO_NUM_33, (char *)"Led verde");
 CARGA *ledModo = new CARGA(GPIO_NUM_23, (char *)"Manual/Automatic");
 CONFIGMAN *configmanagement = new CONFIGMAN("settings.json");
 bool sntp_initialized = false;
@@ -135,7 +134,7 @@ void Task_Core(void *socket_handle) {
         setenv("TZ", "UTC+3",1);
         tzset();
         localtime_r(&now, &timeinfo);
-        ESP_LOGI(SNTP_TAG, "Hora atual: %d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        ESP_LOGI(SNTP_TAG, "Current date and time: %d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     }
 
     int i = 0;
