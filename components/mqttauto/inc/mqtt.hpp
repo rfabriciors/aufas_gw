@@ -28,6 +28,12 @@
 
 /* @brief indicate that the ESP32 is currently connected. */
 const int MQTT_CONNECTED_BIT = BIT0;
+static const char mqtt_Client_cert[] = R"(
+)";
+static const char mqtt_Client_key[] = R"(
+)";
+static const char mqtt_CAcert[] = R"(
+)";
 extern EventGroupHandle_t mqtt_event_group;
 extern esp_mqtt_client_handle_t client;
 extern char *mqtt_uri;

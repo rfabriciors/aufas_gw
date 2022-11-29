@@ -24,7 +24,6 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 
             msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/writecfg", 0);
             ESP_LOGI(TAG_MQTT, "sent subscribe successful in %s, msg_id=%d", "/divasdotiochico/writecfg", msg_id);
-
             // msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/qos1", 1);
             // ESP_LOGI(TAG_MQTT, "sent subscribe successful, msg_id=%d", msg_id);
 
@@ -69,16 +68,15 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
 }
 
 void set_mqtt_uri(char *new_uri) {
-    int i = 0;
     ESP_LOGI(TAG_MQTT, "Change MQTT Broker solicited: [%s]", new_uri);
     esp_mqtt_client_stop(client);
     mqtt_new_cfg.uri = (const char *)new_uri;
-    while (new_uri[i] != '\0')
-    {
-        mqtt_uri2[i] = new_uri[i];
-        i++;
+
+    if ((mqtt_Client_cert != NULL && mqtt_Client_key != NULL && mqtt_CAcert != NULL) && (strstr(new_uri, "mqtts") != NULL))  {
+        mqtt_new_cfg.client_cert_pem = (const char *)mqtt_Client_cert;
+        mqtt_new_cfg.client_key_pem = (const char *)mqtt_Client_key;
+        mqtt_new_cfg.cert_pem = (const char *)mqtt_CAcert;
     }
-    mqtt_uri2[i] = '\0';
     mqtt_cfg = mqtt_new_cfg;
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, client);

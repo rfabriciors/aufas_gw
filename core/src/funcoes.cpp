@@ -124,10 +124,10 @@ void Task_Core(void *socket_handle) {
     {
         if (timeinfo.tm_year < (2016 - 1900))
         {
-            ESP_LOGI(SNTP_TAG, "Hora nao configurada ainda. Obtendo hora via NTP.");
+            ESP_LOGI(SNTP_TAG, "Time not sync yet, getting time by NTP protocol");
             if (!obtain_time())
             {
-                ESP_LOGE(SNTP_TAG, "Nao foi possivel obter a hora Usando default timestamp.");
+                ESP_LOGE(SNTP_TAG, "Cannot get time, using default timestamp");
             }
             time(&now);
         }
@@ -184,7 +184,7 @@ void startconfig(void){
 
 void setValor(char *str,int size, int clientSocket){
     int i = 0, j = 0, l = 0, contchar = 0;
-    char valor[128];
+    char valor[BUFFER_RCP];
     char delim[] = ";";
     char buffer_envio[BUFFER_RCP];
     for (int m = 0; m < BUFFER_RCP;m++){
@@ -192,7 +192,7 @@ void setValor(char *str,int size, int clientSocket){
     }
     char comando[20];
 
-    for (i = 0; i < 128; i++)
+    for (i = 0; i < BUFFER_RCP; i++)
     {
         valor[i] = '\0';
     }
