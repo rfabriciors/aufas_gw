@@ -6,6 +6,18 @@ menu "Configuracao do broker mqtt"
         help
         URL of the broker to connect to
 
+    config DEFAULT_MQTT_SUBSCRIBE_TOPIC
+        string "MQTT subscribe topic"
+        default "/aufas/writecfg"
+        help
+        Topic to receive commands
+
+    config DEFAULT_MQTT_PUBLISH_TOPIC
+        string "MQTT publish topic"
+        default "/aufas/infosystem"
+        help
+        Topic to export config
+
     config BROKER_URL_FROM_STDIN
         bool
         default y if BROKER_URL = "FROM_STDIN"

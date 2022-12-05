@@ -14,6 +14,8 @@ bool sntp_initialized = false;
 
 char *mqtt_uri = (char *)CONFIG_BROKER_URL;
 char mqtt_uri2[128] = CONFIG_BROKER_URL;
+char *mqtt_subscribe_topic = (char *)CONFIG_DEFAULT_MQTT_SUBSCRIBE_TOPIC;
+char *mqtt_publish_topic = (char *)CONFIG_DEFAULT_MQTT_PUBLISH_TOPIC;
 
 EventBits_t uxBits; // Variável para monitorar a saída de xEventGroupWaitBits()
 /*
@@ -111,14 +113,16 @@ void Task_Socket(void *socket_handle) {
         if(sizeRead == 0){
             break;
         }
-//        ESP_LOGI(TAG,"Task_Socket: Socket: %d - Dados lidos (tamanho: %d): %.*s",clientSocket,sizeRead,sizeRead,data);
-       setValor(data, sizeRead, clientSocket);
-       vTaskDelay(200/portTICK_PERIOD_MS);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG,"Task_Socket: Socket: %d - Dados lidos (tamanho: %d): %.*s",clientSocket,sizeRead,sizeRead,data);
+#endif
+        setValor(data, sizeRead, clientSocket);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
     free(data);    
     close(clientSocket);
 #ifdef CONFIG_DEBUG_MODE
-    ESP_LOGI(TAG,"Finalizando o socket: %d", clientSocket);
+    ESP_LOGI(TAG,"Socket finished: %d", clientSocket);
 #endif
     vTaskDelete(NULL);
 }
@@ -273,7 +277,16 @@ void setValor(char *str,int size, int clientSocket){
             sprintf(buffer_envio, "mqtturi$%s", get_mqtt_uri());
             enviaDados(clientSocket, buffer_envio);
         }
-
+        if (strcmp(comando, "getmqttpublish") == 0)
+        {
+            sprintf(buffer_envio, "mqttpublish$%s", get_mqtt_publish());
+            enviaDados(clientSocket, buffer_envio);
+        }
+        if (strcmp(comando, "getmqttsubscribe") == 0)
+        {
+            sprintf(buffer_envio, "mqttsubscribe$%s", get_mqtt_subscribe());
+            enviaDados(clientSocket, buffer_envio);
+        }
             ptr = strtok(NULL, delim); // deve sempre ser o último comando da iteração
     }
 }
@@ -337,9 +350,8 @@ void Task_SendMQTT(void *pVparam)
     while(1) {
         if( (staBits & MQTT_CONNECTED_BIT ) != 0 ) {
             configmanagement->getdata(MQTT_CONFIG_MESSAGE, inforeceived);
-            esp_mqtt_client_publish(client, "/divasdotiochico/infosystem", buffer_envio, 0, 0, 0);
+            esp_mqtt_client_publish(client, mqtt_publish_topic, buffer_envio, 0, 0, 0);
         }
-
         vTaskDelay(700 / portTICK_PERIOD_MS);
     }
 }
@@ -347,7 +359,7 @@ void Task_SendMQTT(void *pVparam)
 void initialize_sntp(void)
 {
     ESP_LOGI(SNTP_TAG, "Initializing SNTP");
-    
+
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, CONFIG_DEFAULT_NTP_URL);
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);

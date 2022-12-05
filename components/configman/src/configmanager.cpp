@@ -15,7 +15,6 @@
 extern struct tm timeinfo;
 extern time_t now;
 const TickType_t xDelay500ms = pdMS_TO_TICKS(500);
-// Structured configs management
 
 CONFIGMAN::CONFIGMAN(const char *nspace)
 {
@@ -24,7 +23,7 @@ CONFIGMAN::CONFIGMAN(const char *nspace)
 
 /*
     Modelo:
-    {"type":"setconfig","mqtt_uri":"mqtt://192.168.1.15","therm":[{"name": "therm_a","offset":0,"location":"House"}],"motor":[{"name":"motor_1","activate":0,"location":"Pump"}],"pid":[{"name":"pid_a","kp":0.096,"ti":0.085,"td":0.3,"ts":0.6,"b_l":0,"b_u":100,"sp":25.7,"mode":"reverse"}],"pwm":[{"name":"pwm_1","device":"Led 1","value":20}],"controlmode":[{"name":"control_1","mode":"automatic"}]}
+    {"type":"setconfig","led":[{"name":"led_1","activate":0,"location":"engine"}]}
 */
 
 int CONFIGMAN::parse_json_data(char *buffer)
@@ -76,16 +75,18 @@ int CONFIGMAN::parse_json_data(char *buffer)
                 }
             }
         }
-        else if (0 == strncmp(item->string, "mqtt_uri", sizeof("mqtt_uri")))
+        else if (0 == strncmp(item->string, "mqtt", sizeof("mqtt")))
         {
-            set_mqtt_uri(item->valuestring);
+            set_mqtt_uri(cJSON_GetObjectItem(item, "mqtt_uri")->valuestring);
 #ifdef CONFIG_DEBUG_MODE
-            ESP_LOGI(TAG_CONFIGMAN, "MQTT URI set to: %s", item->valuestring);
+            ESP_LOGI(TAG_CONFIGMAN, "mqtt_uri: %s", cJSON_GetObjectItem(item, "mqtt_uri")->valuestring);
+            ESP_LOGI(TAG_CONFIGMAN, "mqtt_subscribe_topic: %s", cJSON_GetObjectItem(item, "mqtt_subscribe_topic")->valuestring);
+            ESP_LOGI(TAG_CONFIGMAN, "mqtt_publish_topic: %s", cJSON_GetObjectItem(item, "mqtt_publish_topic")->valuestring);
 #endif
         }
         else if (0 == strncmp(item->string, "timestamp", sizeof("timestamp")))
         {
-            ESP_LOGI(TAG_CONFIGMAN, "Timestamp data: %s", item->valuestring);
+            ESP_LOGI(TAG_CONFIGMAN, "Timestamp saved data: %s", item->valuestring);
         }
         else
         {
@@ -106,17 +107,22 @@ void CONFIGMAN::getdata(int datatype, char *buffer)
     sprintf(timestamp, "%d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
     esp_chip_info_t chip_info;
-    cJSON *root, *ledArray, *led_1, *systemInfo;
+    cJSON *root, *ledArray, *led_1, *systemInfo, *mqtt;
     char *json_info;
     root = cJSON_CreateObject();
     led_1 = cJSON_CreateObject();
     ledArray = cJSON_CreateArray();
-    
+    mqtt = cJSON_CreateObject();
+
     if (datatype == STORE_SYSTEM_CONFIG)
     {
         cJSON_AddStringToObject(root, "type", "setconfig");
-        cJSON_AddStringToObject(root, "mqtt_uri", get_mqtt_uri());
         cJSON_AddStringToObject(root, "timestamp", timestamp);
+
+        cJSON_AddStringToObject(mqtt, "mqtt_uri", get_mqtt_uri());
+        cJSON_AddStringToObject(mqtt, "mqtt_subscribe_topic", get_mqtt_subscribe());
+        cJSON_AddStringToObject(mqtt, "mqtt_publish_topic", get_mqtt_publish());
+        cJSON_AddItemToObject(root, "mqtt", mqtt);
     }
     else if (datatype == MQTT_CONFIG_MESSAGE)
     {
@@ -216,7 +222,7 @@ esp_err_t CONFIGMAN::load_data(char *data)
     {
         err = nvs_get_str(settings_handle, this->nameSpace, aux, &len);
         if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) {
-            ESP_LOGE(TAG_CONFIGMAN, "Erro ao ler dados na flash\n");
+            ESP_LOGE(TAG_CONFIGMAN, "Erro to read data in flash\n");
             nvs_close(settings_handle);
             return err;
         }
@@ -234,18 +240,18 @@ esp_err_t CONFIGMAN::load_data(char *data)
     return ESP_OK;
     }
 
-    esp_err_t CONFIGMAN::erase_data(void)
+esp_err_t CONFIGMAN::erase_data(void)
+{
+    nvs_handle_t settings_handle;
+    esp_err_t err;
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &settings_handle);
+    if (err != ESP_OK)
+        ESP_LOGE(TAG_CONFIGMAN, "Erro ao abrir a flash\n");
+    err = nvs_erase_key(settings_handle, this->nameSpace);
+    if (err != ESP_OK)
     {
-        nvs_handle_t settings_handle;
-        esp_err_t err;
-        err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &settings_handle);
-        if (err != ESP_OK)
-            ESP_LOGE(TAG_CONFIGMAN, "Erro ao abrir a flash\n");
-        err = nvs_erase_key(settings_handle, this->nameSpace);
-        if (err != ESP_OK)
-        {
-            ESP_LOGE(TAG_CONFIGMAN, "Erro ao limpar configurações da flash\n");
-            return err;
-        }
-        return ESP_OK;
+        ESP_LOGE(TAG_CONFIGMAN, "Erro ao limpar configurações da flash\n");
+        return err;
     }
+    return ESP_OK;
+}
