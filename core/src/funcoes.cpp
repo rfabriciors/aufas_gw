@@ -13,7 +13,7 @@ CONFIGMAN *configmanagement = new CONFIGMAN("settings.json");
 bool sntp_initialized = false;
 
 char *mqtt_uri = (char *)CONFIG_BROKER_URL;
-char mqtt_uri2[128];
+char mqtt_uri2[128] = CONFIG_BROKER_URL;
 
 EventBits_t uxBits; // Variável para monitorar a saída de xEventGroupWaitBits()
 /*
@@ -47,7 +47,9 @@ void Task_Socket_Server(void *socket_handle) {
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if(sock < 0) {
+#ifdef CONFIG_DEBUG_MODE
         ESP_LOGI(TAG,"socket: %d %s",sock, strerror(errno));
+#endif
         goto END;
     }
 
@@ -57,14 +59,14 @@ void Task_Socket_Server(void *socket_handle) {
     serverAddress.sin_port = htons(CONFIG_DEFAULT_TCPIP_PORT);
     rc = bind(sock,(struct sockaddr *)&serverAddress,sizeof(serverAddress));
     if(rc < 0) {
-        ESP_LOGI(TAG, "bind: %d %s", rc, strerror(errno));
+        ESP_LOGE(TAG, "bind: %d %s", rc, strerror(errno));
         goto END;
     }
 
     // Define o tamanho máximo da fila para atendimento das conexões dos clientes
     rc = listen(sock,MAX_NUMERO_CLIENTES);
     if(rc < 0) {
-        ESP_LOGI(TAG, "listen: %d %s", rc, strerror(errno));
+        ESP_LOGE(TAG, "listen: %d %s", rc, strerror(errno));
         goto END;
     }
 
@@ -73,21 +75,22 @@ void Task_Socket_Server(void *socket_handle) {
         // Aceita a conexão e retorna o socket do cliente
         int clientSock = accept(sock,(struct sockaddr *)&clientAddress, &clientAddressLength);
         if(clientSock < 0){
-            ESP_LOGI(TAG, "accept %d %s",clientSock, strerror(errno));
+            ESP_LOGE(TAG, "accept %d %s",clientSock, strerror(errno));
         } else {
+#ifdef CONFIG_DEBUG_MODE
             ESP_LOGI(TAG, "SOCKET N: %d\n",clientSock);
-
+#endif
             /*
                 Cria uma task socket para cada cliente, passando como parâmetro o número do socket
                 assim é possível conectar simultâneamente vários clientes e tratá-los individualmente
                 É através de clientSock que se pode fazer o send e o read para os clientes
             */
-           xTaskCreate(Task_Socket,"Task_Socket",8192,(void *)clientSock,5,NULL);
+           xTaskCreate(Task_Socket,"Task_Socket",12288,(void *)clientSock,5,NULL);
         }
     }
     END:
         // Se chegou aqui houve falha em algum ponto de conexão
-        ESP_LOGI(TAG,"Fim da task Socket_Server");
+        ESP_LOGE(TAG,"Fim da task Socket_Server");
         vTaskDelete(NULL);
 }
 
@@ -102,7 +105,7 @@ void Task_Socket(void *socket_handle) {
     while(true) {
         ssize_t sizeRead = recv(clientSocket, data, BUFFER_RCP, 0);
         if(sizeRead < 0){
-            ESP_LOGI(TAG, "recv: %d %s",sizeRead, strerror(errno));
+            ESP_LOGE(TAG, "recv: %d %s",sizeRead, strerror(errno));
             break;
         }
         if(sizeRead == 0){
@@ -114,7 +117,9 @@ void Task_Socket(void *socket_handle) {
     }
     free(data);    
     close(clientSocket);
+#ifdef CONFIG_DEBUG_MODE
     ESP_LOGI(TAG,"Finalizando o socket: %d", clientSocket);
+#endif
     vTaskDelete(NULL);
 }
 
@@ -124,10 +129,10 @@ void Task_Core(void *socket_handle) {
     {
         if (timeinfo.tm_year < (2016 - 1900))
         {
-            ESP_LOGI(SNTP_TAG, "Hora nao configurada ainda. Obtendo hora via NTP.");
+            ESP_LOGI(SNTP_TAG, "Time not sync yet, getting time by NTP protocol");
             if (!obtain_time())
             {
-                ESP_LOGE(SNTP_TAG, "Nao foi possivel obter a hora Usando default timestamp.");
+                ESP_LOGE(SNTP_TAG, "Cannot get time, using default timestamp");
             }
             time(&now);
         }
@@ -184,7 +189,7 @@ void startconfig(void){
 
 void setValor(char *str,int size, int clientSocket){
     int i = 0, j = 0, l = 0, contchar = 0;
-    char valor[128];
+    char valor[BUFFER_RCP];
     char delim[] = ";";
     char buffer_envio[BUFFER_RCP];
     for (int m = 0; m < BUFFER_RCP;m++){
@@ -192,7 +197,7 @@ void setValor(char *str,int size, int clientSocket){
     }
     char comando[20];
 
-    for (i = 0; i < 128; i++)
+    for (i = 0; i < BUFFER_RCP; i++)
     {
         valor[i] = '\0';
     }
@@ -205,7 +210,9 @@ void setValor(char *str,int size, int clientSocket){
             contchar++;
         }    
     }
-    ESP_LOGI(TAG_TASK_SOCKET, "setValor: size %d, Delimitadores %d", size, contchar);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_TASK_SOCKET, "setValor: size %d, Delimiter %d", size, contchar);
+#endif
     size = size - contchar;
     char *ptr = strtok(str,delim);
     while ((ptr != NULL) && (l < (size-2)))
@@ -280,15 +287,15 @@ void enviaDados(int clientSocket,char *data) {
     if(rc < 0) {
         ESP_LOGE(TAG, "send: %d %s", rc, strerror(errno));
     }
-    //#ifdef DEBUG
-         ESP_LOGI(TAG,"enviaDados: send: rc: %d size: %d data: %s", rc, strlen(data),data);
-    //#endif
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG, "enviaDados: send: rc: %d size: %d data: %s", rc, strlen(data), data);
+#endif
 }
 
 void Task_LED(void *pVparam) {
-    #ifdef DEBUG
-        ESP_LOGI( TAG, "Task_LED inited" );
-    #endif
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG, "Task_LED inited");
+#endif
     gpio_config_t led_cfg = {};
         led_cfg.pin_bit_mask = GPIO_OUTPUT;
         led_cfg.mode = GPIO_MODE_OUTPUT;
@@ -320,7 +327,7 @@ void Task_LED(void *pVparam) {
 
 void Task_SendMQTT(void *pVparam)
 {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_MODE
     ESP_LOGI(TAG, "Task_SendMQTT initialized");
 #endif
     EventBits_t staBits;
@@ -339,9 +346,8 @@ void Task_SendMQTT(void *pVparam)
 
 void initialize_sntp(void)
 {
-    #ifdef DEBUG
-        ESP_LOGI(SNTP_TAG, "Initializing SNTP");
-    #endif
+    ESP_LOGI(SNTP_TAG, "Initializing SNTP");
+    
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, CONFIG_DEFAULT_NTP_URL);
     sntp_set_time_sync_notification_cb(time_sync_notification_cb);

@@ -24,7 +24,6 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 
             msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/writecfg", 0);
             ESP_LOGI(TAG_MQTT, "sent subscribe successful in %s, msg_id=%d", "/divasdotiochico/writecfg", msg_id);
-
             // msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/qos1", 1);
             // ESP_LOGI(TAG_MQTT, "sent subscribe successful, msg_id=%d", msg_id);
 
@@ -70,9 +69,21 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
 
 void set_mqtt_uri(char *new_uri) {
     int i = 0;
+    
+    if (new_uri == NULL) {
+        new_uri = (char *)CONFIG_BROKER_URL;
+    }
+#ifdef CONFIG_DEBUG_MODE
     ESP_LOGI(TAG_MQTT, "Change MQTT Broker solicited: [%s]", new_uri);
+#endif
     esp_mqtt_client_stop(client);
     mqtt_new_cfg.uri = (const char *)new_uri;
+
+    if ((mqtt_Client_cert != NULL && mqtt_Client_key != NULL && mqtt_CAcert != NULL) && (strstr(new_uri, "mqtts") != NULL))  {
+        mqtt_new_cfg.client_cert_pem = (const char *)mqtt_Client_cert;
+        mqtt_new_cfg.client_key_pem = (const char *)mqtt_Client_key;
+        mqtt_new_cfg.cert_pem = (const char *)mqtt_CAcert;
+    }
     while (new_uri[i] != '\0')
     {
         mqtt_uri2[i] = new_uri[i];
@@ -85,11 +96,13 @@ void set_mqtt_uri(char *new_uri) {
     esp_mqtt_client_start(client);
 }
 
-const char* get_mqtt_uri(void) { return mqtt_uri2; }
+/**
+ * Return MQTT URI
+ */
+const char* get_mqtt_uri(void) {  return mqtt_uri2; }
 
 /**
- * 
- * Inicia o MQTT
+ * Start MQTT
  */
 void mqtt_app_start(void) {
     
@@ -124,10 +137,15 @@ void mqtt_app_start(void) {
     esp_mqtt_client_start(client);
 }
 
+/**
+ * MQTT parse task
+ */
 void Task_MQTT_parse(void *pvParm)
 {
     char *data = (char *)pvParm;
-//    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Dados: %s", data);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Data: %s", data);
+#endif
     if (configmanagement->parse_json_data(data) < 0)
     {
         ESP_LOGE(TAG_MQTT,"[MQTT_parse] Erro no parse");

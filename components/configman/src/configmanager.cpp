@@ -31,17 +31,19 @@ int CONFIGMAN::parse_json_data(char *buffer)
 {
     cJSON *root, *item, *value_item, *aux;
     char *value_str = NULL;
-
-//    ESP_LOGI(TAG_CONFIGMAN, "Analising data: %s", buffer);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_CONFIGMAN, "Analising data: %s", buffer);
+#endif
     root = cJSON_Parse((char *)buffer);
     if (!root)
     {
-        ESP_LOGE(TAG_CONFIGMAN, "Erro na estrutura JSON: [%s]", cJSON_GetErrorPtr());
+        ESP_LOGE(TAG_CONFIGMAN, "JSON struct error: [%s]", cJSON_GetErrorPtr());
         return -1;
     }
     int json_item_num = cJSON_GetArraySize(root);
-    // ESP_LOGI(TAG_CONFIGMAN, "Total de itens no dado recebido (root): %d", json_item_num);
-
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_CONFIGMAN, "Total itens in data receved (root): %d", json_item_num);
+#endif
     for (int32_t i = 0; i < json_item_num; ++i)
     {                                       // percorre os itens na raiz
         item = cJSON_GetArrayItem(root, i); // obtém os subitens do item 'i'
@@ -77,7 +79,9 @@ int CONFIGMAN::parse_json_data(char *buffer)
         else if (0 == strncmp(item->string, "mqtt_uri", sizeof("mqtt_uri")))
         {
             set_mqtt_uri(item->valuestring);
+#ifdef CONFIG_DEBUG_MODE
             ESP_LOGI(TAG_CONFIGMAN, "MQTT URI set to: %s", item->valuestring);
+#endif
         }
         else if (0 == strncmp(item->string, "timestamp", sizeof("timestamp")))
         {
@@ -154,9 +158,12 @@ esp_err_t CONFIGMAN::saveconfig(void)
     {
         size_data++;
     }
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_CONFIGMAN, "Data read: %s", data);
+#endif
     err = this->save_data(data, size_data);
     if (err != ESP_OK)
-        ESP_LOGE(TAG_CONFIGMAN, "Erro ao salvar os dados\n");
+        ESP_LOGE(TAG_CONFIGMAN, "Cannot save data\n");
     return ESP_OK;
 }
 

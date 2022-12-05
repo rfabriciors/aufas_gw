@@ -34,7 +34,7 @@
 #define GPIO_INPUT ((1ULL << BUTTON_MAN_AUT) | (1ULL << BUTTON_MOTOR))
 #define ATRASO_50 50
 #define ATRASO_2850 2850
-#define BUFFER_RCP 1024
+#define BUFFER_RCP 3072
 
 #define MEMORY_TAG "Memory"
 #define SNTP_TAG "sntp"

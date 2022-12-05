@@ -78,4 +78,10 @@ menu "Gerenciamento de configuracao do WiFi Manager"
         help
         Number of attemps for connect to NTP server
 
+    config DEBUG_MODE
+        bool "Habilita o modo debug"
+        default "n"
+        help
+            Selecione esta opção para habilitar o modo debug.
+
 endmenu

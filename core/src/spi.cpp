@@ -22,10 +22,10 @@ THERM::THERM(int cs_port, int clk, int unit) {
     .spics_io_num=CS_PORT,
     .queue_size=1
   };
-  
-  #ifdef DEBUG
-    ESP_LOGI(TAG_SPI, "spi_therm_init: Adicionando o dispositivo ao bus.");
-  #endif
+
+#ifdef CONFIG_DEBUG_MODE
+  ESP_LOGI(TAG_SPI, "spi_therm_init: Adicionando o dispositivo ao bus.");
+#endif
   ESP_ERROR_CHECK(spi_bus_add_device(HSPI_HOST, &spi_interface_cfg, &spi_dev_handle));
   this->offset = 0;
   this->unit = CELSIUS;
@@ -60,7 +60,9 @@ float THERM::setOffset(float offset){ this->offset = offset; return offset;}
 float THERM::getOffset(void){ return this->offset;}
 int THERM::getUnit(void){return this->unit;}
 int THERM::setUnit(unsigned int unit){
+#ifdef CONFIG_DEBUG_MODE
   ESP_LOGI(TAG_SPI, "Valor recebido %d",unit);
+#endif  
   switch (unit) {
     case 0:
       this->unit = unit;

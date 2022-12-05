@@ -33,14 +33,18 @@ void CARGA::switchOn(void)
 {
     gpio_set_level(this->cargaOutput, 1);
     this->status = 1;
-//    ESP_LOGI(CARGA_TAG, "Carga %s acionada", this->location);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(CARGA_TAG, "Load %s turn on", this->location);
+#endif
 }
 
 void CARGA::switchOff(void)
 {
     gpio_set_level(this->cargaOutput, 0);
     this->status = 0;
-//    ESP_LOGI(CARGA_TAG, "Carga %s desligada", this->location);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(CARGA_TAG, "Load %s turn off", this->location);
+#endif
 }
 
 int CARGA::switchCarga(int input)
