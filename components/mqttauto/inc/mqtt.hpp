@@ -110,11 +110,17 @@ extern EventGroupHandle_t mqtt_event_group;
 extern esp_mqtt_client_handle_t client;
 extern char *mqtt_uri;
 extern char mqtt_uri2[128];
+extern char *mqtt_subscribe_topic;
+extern char *mqtt_publish_topic;
+
+
 void Task_MQTT_parse(void *pvParm);
 void mqtt_app_start(void);
 void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event);
 void set_mqtt_uri(char *);
 const char *get_mqtt_uri(void);
+const char *get_mqtt_publish(void);
+const char *get_mqtt_subscribe(void);
 
 #endif

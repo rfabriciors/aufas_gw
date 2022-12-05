@@ -10,6 +10,9 @@ esp_mqtt_client_config_t mqtt_new_cfg = {};
 
 extern CONFIGMAN *configmanagement;
 
+/**
+ * Event handler cb
+ */
 esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
     client = event->client;
@@ -22,8 +25,8 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG_MQTT, "MQTT_EVENT_CONNECTED");
             xEventGroupSetBits( mqtt_event_group, MQTT_CONNECTED_BIT );
 
-            msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/writecfg", 0);
-            ESP_LOGI(TAG_MQTT, "sent subscribe successful in %s, msg_id=%d", "/divasdotiochico/writecfg", msg_id);
+            msg_id = esp_mqtt_client_subscribe(client, mqtt_subscribe_topic, 0);
+            ESP_LOGI(TAG_MQTT, "sent subscribe successful in %s, msg_id=%d", mqtt_subscribe_topic, msg_id);
             // msg_id = esp_mqtt_client_subscribe(client, "/divasdotiochico/qos1", 1);
             // ESP_LOGI(TAG_MQTT, "sent subscribe successful, msg_id=%d", msg_id);
 
@@ -37,8 +40,6 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG_MQTT, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-            msg_id = esp_mqtt_client_publish(client, "/topic/writecfg", "data", 0, 0, 0);
-            ESP_LOGI(TAG_MQTT, "sent publish successful, msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_UNSUBSCRIBED:
             ESP_LOGI(TAG_MQTT, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -48,7 +49,6 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_DATA:
             my_json_input = (char *)malloc(event->data_len + 1);
-            // ESP_LOGI(TAG_MQTT, "MQTT_EVENT_DATA");
             snprintf(my_json_input, event->data_len + 1, event->data);
             xTaskCreate(Task_MQTT_parse,"Task_MQTT_parse",4096,(void *)my_json_input,5,NULL);
             break;
@@ -62,11 +62,17 @@ esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
+/**
+ * Register event handler cb
+ */
 void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
     ESP_LOGD(TAG_MQTT, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
     mqtt_event_handler_cb((esp_mqtt_event_handle_t) event_data);
 }
 
+/**
+ * Define MQTT URI
+ */
 void set_mqtt_uri(char *new_uri) {
     int i = 0;
     
@@ -100,6 +106,16 @@ void set_mqtt_uri(char *new_uri) {
  * Return MQTT URI
  */
 const char* get_mqtt_uri(void) {  return mqtt_uri2; }
+
+/**
+ * Return MQTT publish topic
+ */
+const char *get_mqtt_publish(void) { return mqtt_publish_topic; }
+
+/**
+ * Return MQTT subscribe topic
+ */
+const char *get_mqtt_subscribe(void) { return mqtt_subscribe_topic; }
 
 /**
  * Start MQTT
