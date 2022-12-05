@@ -73,9 +73,9 @@ void set_mqtt_uri(char *new_uri) {
     if (new_uri == NULL) {
         new_uri = (char *)CONFIG_BROKER_URL;
     }
-
+#ifdef CONFIG_DEBUG_MODE
     ESP_LOGI(TAG_MQTT, "Change MQTT Broker solicited: [%s]", new_uri);
-
+#endif
     esp_mqtt_client_stop(client);
     mqtt_new_cfg.uri = (const char *)new_uri;
 
@@ -99,9 +99,7 @@ void set_mqtt_uri(char *new_uri) {
 /**
  * Return MQTT URI
  */
-const char* get_mqtt_uri(void) { 
-    return mqtt_uri2;
-    }
+const char* get_mqtt_uri(void) {  return mqtt_uri2; }
 
 /**
  * Start MQTT
@@ -145,7 +143,9 @@ void mqtt_app_start(void) {
 void Task_MQTT_parse(void *pvParm)
 {
     char *data = (char *)pvParm;
-//    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Data: %s", data);
+#ifdef CONFIG_DEBUG_MODE
+    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Data: %s", data);
+#endif
     if (configmanagement->parse_json_data(data) < 0)
     {
         ESP_LOGE(TAG_MQTT,"[MQTT_parse] Erro no parse");
