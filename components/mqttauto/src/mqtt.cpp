@@ -68,7 +68,14 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
 }
 
 void set_mqtt_uri(char *new_uri) {
+    int i = 0;
+    
+    if (new_uri == NULL) {
+        new_uri = (char *)CONFIG_BROKER_URL;
+    }
+
     ESP_LOGI(TAG_MQTT, "Change MQTT Broker solicited: [%s]", new_uri);
+
     esp_mqtt_client_stop(client);
     mqtt_new_cfg.uri = (const char *)new_uri;
 
@@ -77,17 +84,27 @@ void set_mqtt_uri(char *new_uri) {
         mqtt_new_cfg.client_key_pem = (const char *)mqtt_Client_key;
         mqtt_new_cfg.cert_pem = (const char *)mqtt_CAcert;
     }
+    while (new_uri[i] != '\0')
+    {
+        mqtt_uri2[i] = new_uri[i];
+        i++;
+    }
+    mqtt_uri2[i] = '\0';
     mqtt_cfg = mqtt_new_cfg;
     client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, client);
     esp_mqtt_client_start(client);
 }
 
-const char* get_mqtt_uri(void) { return mqtt_uri2; }
+/**
+ * Return MQTT URI
+ */
+const char* get_mqtt_uri(void) { 
+    return mqtt_uri2;
+    }
 
 /**
- * 
- * Inicia o MQTT
+ * Start MQTT
  */
 void mqtt_app_start(void) {
     
@@ -122,10 +139,13 @@ void mqtt_app_start(void) {
     esp_mqtt_client_start(client);
 }
 
+/**
+ * MQTT parse task
+ */
 void Task_MQTT_parse(void *pvParm)
 {
     char *data = (char *)pvParm;
-//    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Dados: %s", data);
+//    ESP_LOGI(TAG_MQTT,"[MQTT_parse] Data: %s", data);
     if (configmanagement->parse_json_data(data) < 0)
     {
         ESP_LOGE(TAG_MQTT,"[MQTT_parse] Erro no parse");

@@ -154,6 +154,9 @@ esp_err_t CONFIGMAN::saveconfig(void)
     {
         size_data++;
     }
+
+    ESP_LOGI(TAG_CONFIGMAN, "Data read: %s", data);
+
     err = this->save_data(data, size_data);
     if (err != ESP_OK)
         ESP_LOGE(TAG_CONFIGMAN, "Erro ao salvar os dados\n");

@@ -13,7 +13,7 @@ CONFIGMAN *configmanagement = new CONFIGMAN("settings.json");
 bool sntp_initialized = false;
 
 char *mqtt_uri = (char *)CONFIG_BROKER_URL;
-char mqtt_uri2[128];
+char mqtt_uri2[128] = CONFIG_BROKER_URL;
 
 EventBits_t uxBits; // Variável para monitorar a saída de xEventGroupWaitBits()
 /*
@@ -82,7 +82,7 @@ void Task_Socket_Server(void *socket_handle) {
                 assim é possível conectar simultâneamente vários clientes e tratá-los individualmente
                 É através de clientSock que se pode fazer o send e o read para os clientes
             */
-           xTaskCreate(Task_Socket,"Task_Socket",8192,(void *)clientSock,5,NULL);
+           xTaskCreate(Task_Socket,"Task_Socket",12288,(void *)clientSock,5,NULL);
         }
     }
     END:
